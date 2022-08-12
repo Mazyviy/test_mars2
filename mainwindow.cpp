@@ -1,18 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QFile>
-#include <QMessageBox>
-#include <QDomDocument>
-#include <QDebug>
-#include <QTime>
-#include <QTimer>
-#include <QPainter>
-
-QMap<QString, QMap<QString, QString>> xmlElements;
-QMap<QString, QString> xmlSize;
-QString xmlBackground;
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -20,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     readXML();
+    this->setFixedSize(xmlSize["back"]["width"].toInt(),xmlSize["back"]["height"].toInt());
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -34,6 +23,12 @@ MainWindow::~MainWindow()
 void MainWindow::readXML()
 {
     QFile file("config.xml");
+    if(!file.exists())
+    {
+        QMessageBox::about(NULL, tr("prompt"), tr("Файл конфигурации не найден"));
+        return;
+    }
+    if (!file.open(QIODevice::ReadOnly)) return;
     QDomDocument Qdoc;
     if (!Qdoc.setContent(&file))
     {
@@ -42,38 +37,37 @@ void MainWindow::readXML()
     }
     file.close();
 
-    QDomNodeList list = Qdoc.elementsByTagName ("root");
-    QDomNodeList child = list.at(0).childNodes();
-    for(int i = 0; i < child.count(); ++i)
+    QDomNodeList list = Qdoc.elementsByTagName ("group");
+    for(int i = 0; i < list.count(); ++i)
     {
-        if(child.at(i).toElement().tagName()=="group")
-        {
-            QMap<QString, QString> item;
-            item.insert("color", child.at(i).toElement().attribute("color"));
-            item.insert("x", child.at(i).toElement().attribute("x"));
-            item.insert("y", child.at(i).toElement().attribute("y"));
-            xmlElements.insert(child.at(i).toElement().tagName()+child.at(i).toElement().attribute("number"),item);
-        }
+        QMap<QString, QString> item;
+        item.insert("color", list.at(i).toElement().attribute("color"));
+        item.insert("x", list.at(i).toElement().attribute("x"));
+        item.insert("y", list.at(i).toElement().attribute("y"));
+        item.insert("col", list.at(i).toElement().attribute("col"));
+        xmlCubes.insert(list.at(i).toElement().attribute("number"),item);
     }
 
     list = Qdoc.elementsByTagName("background");
-    xmlBackground=list.at(0).toElement().attribute("color");
+    xmlBackgroundCube=list.at(0).toElement().attribute("color");
 
-    list = Qdoc.elementsByTagName("cube");
-    xmlSize.insert("width", list.at(0).toElement().attribute("width"));
-    xmlSize.insert("height", list.at(0).toElement().attribute("height"));
-
-    qDebug()<<xmlElements;
+    list = Qdoc.elementsByTagName("sizes");
+    QDomNodeList child = list.at(0).childNodes();
+    for(int i = 0; i < child.count(); ++i)
+    {
+        QMap<QString, QString> item;
+        item.insert("width", child.at(i).toElement().attribute("width"));
+        item.insert("height", child.at(i).toElement().attribute("height"));
+        xmlSize.insert(child.at(i).toElement().tagName(),item);
+    }
 }
 
 void MainWindow::paintEvent(QPaintEvent *)
 {
     srand(time(NULL));
-
     QDateTime time = QDateTime::currentDateTime();
     int Hour = time.toString("hh").toInt();
     int Minute = time.toString("mm").toInt();
-
     QVector<int> hourTens(3);
     QVector<int> hourUnits(9);
     QVector<int> minuteTens(6);
@@ -81,147 +75,71 @@ void MainWindow::paintEvent(QPaintEvent *)
 
     for (int i=0; i<Hour/10; ++i)
     {
-        int count=rand()%3;
+        int count=rand()%hourTens.size();
         while(hourTens[count]==1)
         {
-            count=rand()%3;
+            count=rand()%hourTens.size();
         }
         hourTens[count]=1;
     }
 
     for (int i=0; i<Hour%10; ++i)
     {
-        int count=rand()%9;
+        int count=rand()%hourUnits.size();
         while(hourUnits[count]==1)
         {
-            count=rand()%9;
+            count=rand()%hourUnits.size();
         }
         hourUnits[count]=1;
     }
 
     for (int i=0; i<Minute/10; ++i)
     {
-        int count=rand()%6;
+        int count=rand()%minuteTens.size();
         while(minuteTens[count]==1)
         {
-            count=rand()%6;
+            count=rand()%minuteTens.size();
         }
         minuteTens[count]=1;
     }
 
     for (int i=0; i<Minute%10; ++i)
     {
-        int count=rand()%9;
+        int count=rand()%minuteUnits.size();
         while(minuteUnits[count]==1)
         {
-            count=rand()%9;
+            count=rand()%minuteUnits.size();
         }
         minuteUnits[count]=1;
     }
 
-    qDebug()<<"hourTens";
-    QString str;
-    for (int i=0; i<hourTens.size(); ++i)
-    {
-        str+=QString::number(hourTens[i])+" ";
-    }
-    qDebug()<<str;
-    str="";
-    qDebug()<<"hourUnits";
-    for (int i=0; i<hourUnits.size(); ++i)
-    {
-        str+=QString::number(hourUnits[i])+" ";
-    }
-    qDebug()<<str;
-    str="";
-    qDebug()<<"minuteTens";
-    for (int i=0; i<minuteTens.size(); ++i)
-    {
-        str+=QString::number(minuteTens[i])+" ";
-    }
-    qDebug()<<str;
-    str="";
-    qDebug()<<"minuteUnits";
-    for (int i=0; i<minuteUnits.size(); ++i)
-    {
-        str+=QString::number(minuteUnits[i])+" ";
-    }
-    qDebug()<<str;
-
-
     QPainter painter(this);
     painter.setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap));
 
-    int i=0;
-    for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
+    QVector<int> *pointer;
+    for (int i=1; i<=xmlCubes.size(); ++i)
     {
-        if(hourTens[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group1"]["color"]), Qt::SolidPattern));
-        else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
+        int count=0;
+        if(i==1) pointer=&hourTens;
+        else if(i==2) pointer=&hourUnits;
+        else if(i==3) pointer=&minuteTens;
+        else if(i==4) pointer=&minuteUnits;
 
-        QPolygonF square;
-        square.append(QPointF(xmlElements["group1"]["x"].toInt(),xmlElements["group1"]["y"].toInt()+countY));
-        square.append(QPointF(xmlElements["group1"]["x"].toInt()+xmlSize["width"].toInt(),xmlElements["group1"]["y"].toInt()+countY));
-        square.append(QPointF(xmlElements["group1"]["x"].toInt()+xmlSize["width"].toInt(),xmlElements["group1"]["y"].toInt()+countY+xmlSize["height"].toInt()));
-        square.append(QPointF(xmlElements["group1"]["x"].toInt(),xmlElements["group1"]["y"].toInt()+xmlSize["height"].toInt()+countY));
-        painter.drawPolygon(square);
-
-        i++;
-    }
-    i=0;
-
-    for (int countX=0; countX<xmlSize["width"].toInt()*3; countX+=xmlSize["width"].toInt())
-    {
-        for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
+        for (int countX=0; countX<xmlCubes[QString::number(i)]["col"].toInt()*xmlSize["cube"]["width"].toInt(); countX+=xmlSize["cube"]["width"].toInt())
         {
-            if(hourUnits[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group2"]["color"]), Qt::SolidPattern));
-            else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
+            for (int countY=0; countY<3*xmlSize["cube"]["height"].toInt(); countY+=xmlSize["cube"]["height"].toInt())
+            {
+                if((*pointer)[count]==1) painter.setBrush(QBrush(QColor(xmlCubes[QString::number(i)]["color"]), Qt::SolidPattern));
+                else painter.setBrush(QBrush(QColor(xmlBackgroundCube), Qt::SolidPattern));
 
-            QPolygonF square;
-            square.append(QPointF(xmlElements["group2"]["x"].toInt()+countX,xmlElements["group2"]["y"].toInt()+countY));
-            square.append(QPointF(xmlElements["group2"]["x"].toInt()+countX+xmlSize["width"].toInt(),xmlElements["group2"]["y"].toInt()+countY));
-            square.append(QPointF(xmlElements["group2"]["x"].toInt()+countX+xmlSize["width"].toInt(),xmlElements["group2"]["y"].toInt()+countY+xmlSize["height"].toInt()));
-            square.append(QPointF(xmlElements["group2"]["x"].toInt()+countX,xmlElements["group2"]["y"].toInt()+xmlSize["height"].toInt()+countY));
-            painter.drawPolygon(square);
-
-            i++;
-        }
-    }
-    i=0;
-
-
-    for (int countX=0; countX<2*xmlSize["width"].toInt(); countX+=xmlSize["width"].toInt())
-    {
-        for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
-        {
-            if(minuteTens[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group3"]["color"]), Qt::SolidPattern));
-            else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
-
-            QPolygonF square;
-            square.append(QPointF(xmlElements["group3"]["x"].toInt()+countX,xmlElements["group3"]["y"].toInt()+countY));
-            square.append(QPointF(xmlElements["group3"]["x"].toInt()+countX+xmlSize["width"].toInt(),xmlElements["group3"]["y"].toInt()+countY));
-            square.append(QPointF(xmlElements["group3"]["x"].toInt()+countX+xmlSize["width"].toInt(),xmlElements["group3"]["y"].toInt()+countY+xmlSize["height"].toInt()));
-            square.append(QPointF(xmlElements["group3"]["x"].toInt()+countX,xmlElements["group3"]["y"].toInt()+xmlSize["height"].toInt()+countY));
-            painter.drawPolygon(square);
-            i++;
-        }
-    }
-    i=0;
-
-    for (int countX=0; countX<3*xmlSize["width"].toInt(); countX+=xmlSize["width"].toInt())
-    {
-        for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
-        {
-            if(minuteUnits[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group4"]["color"]), Qt::SolidPattern));
-            else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
-
-            QPolygonF square;
-            square.append(QPointF(xmlElements["group4"]["x"].toInt()+countX,xmlElements["group4"]["y"].toInt()+countY));
-            square.append(QPointF(xmlElements["group4"]["x"].toInt()+countX+xmlSize["width"].toInt(),xmlElements["group4"]["y"].toInt()+countY));
-            square.append(QPointF(xmlElements["group4"]["x"].toInt()+countX+xmlSize["width"].toInt(),xmlElements["group4"]["y"].toInt()+countY+xmlSize["height"].toInt()));
-            square.append(QPointF(xmlElements["group4"]["x"].toInt()+countX,xmlElements["group4"]["y"].toInt()+xmlSize["height"].toInt()+countY));
-            painter.drawPolygon(square);
-
-            i++;
+                QPolygonF square;
+                square.append(QPointF(xmlCubes[QString::number(i)]["x"].toInt()+countX,xmlCubes[QString::number(i)]["y"].toInt()+countY));
+                square.append(QPointF(xmlCubes[QString::number(i)]["x"].toInt()+countX+xmlSize["cube"]["width"].toInt(),xmlCubes[QString::number(i)]["y"].toInt()+countY));
+                square.append(QPointF(xmlCubes[QString::number(i)]["x"].toInt()+countX+xmlSize["cube"]["width"].toInt(),xmlCubes[QString::number(i)]["y"].toInt()+countY+xmlSize["cube"]["height"].toInt()));
+                square.append(QPointF(xmlCubes[QString::number(i)]["x"].toInt()+countX,xmlCubes[QString::number(i)]["y"].toInt()+xmlSize["cube"]["height"].toInt()+countY));
+                painter.drawPolygon(square);
+                count++;
+            }
         }
     }
 }
