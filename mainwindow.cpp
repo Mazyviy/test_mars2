@@ -156,7 +156,7 @@ void MainWindow::paintEvent(QPaintEvent *)
     for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
     {
         if(hourTens[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group1"]["color"]), Qt::SolidPattern));
-        else painter.setBrush(QBrush());
+        else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
 
         QPolygonF square;
         square.append(QPointF(xmlElements["group1"]["x"].toInt(),xmlElements["group1"]["y"].toInt()+countY));
@@ -174,7 +174,7 @@ void MainWindow::paintEvent(QPaintEvent *)
         for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
         {
             if(hourUnits[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group2"]["color"]), Qt::SolidPattern));
-            else painter.setBrush(QBrush());
+            else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
 
             QPolygonF square;
             square.append(QPointF(xmlElements["group2"]["x"].toInt()+countX,xmlElements["group2"]["y"].toInt()+countY));
@@ -194,7 +194,7 @@ void MainWindow::paintEvent(QPaintEvent *)
         for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
         {
             if(minuteTens[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group3"]["color"]), Qt::SolidPattern));
-            else painter.setBrush(QBrush());
+            else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
 
             QPolygonF square;
             square.append(QPointF(xmlElements["group3"]["x"].toInt()+countX,xmlElements["group3"]["y"].toInt()+countY));
@@ -212,7 +212,7 @@ void MainWindow::paintEvent(QPaintEvent *)
         for (int countY=0; countY<3*xmlSize["height"].toInt(); countY+=xmlSize["height"].toInt())
         {
             if(minuteUnits[i]==1) painter.setBrush(QBrush(QColor(xmlElements["group4"]["color"]), Qt::SolidPattern));
-            else painter.setBrush(QBrush());
+            else painter.setBrush(QBrush(QColor(xmlBackground), Qt::SolidPattern));
 
             QPolygonF square;
             square.append(QPointF(xmlElements["group4"]["x"].toInt()+countX,xmlElements["group4"]["y"].toInt()+countY));
