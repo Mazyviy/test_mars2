@@ -5,10 +5,9 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-
     readXML();
     this->setFixedSize(xmlSize["back"]["width"].toInt(),xmlSize["back"]["height"].toInt());
+    ui->setupUi(this);
 
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -40,7 +39,7 @@ void MainWindow::readXML()
     file.close();
 
     QDomNodeList list = Qdoc.elementsByTagName ("group");
-    for(int i = 0; i < list.count(); ++i)
+    for(int i = 0; i < 4; ++i)
     {
         QMap<QString, QString> item;
         item.insert("color", list.at(i).toElement().attribute("color"));
@@ -55,7 +54,7 @@ void MainWindow::readXML()
 
     list = Qdoc.elementsByTagName("sizes");
     QDomNodeList child = list.at(0).childNodes();
-    for(int i = 0; i < child.count(); ++i)
+    for(int i = 0; i < 2; ++i)
     {
         QMap<QString, QString> item;
         item.insert("width", child.at(i).toElement().attribute("width"));
@@ -126,8 +125,10 @@ void MainWindow::paintEvent(QPaintEvent *)
 
     QVector<int> *pointer;
     // рисует cubes.
-    //
-    for (int i=1; i<=xmlCubes.size(); ++i)
+    // pointer содержит адрес вектора hourTens, hourUnits, minuteTens или minuteUnits;
+    // count - инкремент, если pointer[count]==1, то задается соответствующий цвет cubes
+    // в цикле присутвует значение "col" из .xml, он задает количество столбцов группы
+    for (int i=1; i<=4; ++i)
     {
         int count=0;
         if(i==1) pointer=&hourTens;
