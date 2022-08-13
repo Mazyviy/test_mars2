@@ -20,6 +20,8 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// Считывает необходимые данные из .xml
+// и записывает в xmlCubes, xmlSize, xmlBackgroundCube
 void MainWindow::readXML()
 {
     QFile file("config.xml");
@@ -62,12 +64,18 @@ void MainWindow::readXML()
     }
 }
 
+// Отрисовывает данные
 void MainWindow::paintEvent(QPaintEvent *)
 {
     srand(time(NULL));
     QDateTime time = QDateTime::currentDateTime();
     int Hour = time.toString("hh").toInt();
     int Minute = time.toString("mm").toInt();
+
+    // Векторы десятков и единиц часов и минут,
+    // соответствующих размерам груп.
+    // Рандомно заполняются "1", сумма "1" равна числу десятков и единиц.
+    // Используются для закрашивания соответствующих cubes.
     QVector<int> hourTens(3);
     QVector<int> hourUnits(9);
     QVector<int> minuteTens(6);
@@ -117,6 +125,8 @@ void MainWindow::paintEvent(QPaintEvent *)
     painter.setPen(QPen(Qt::black, 1, Qt::SolidLine, Qt::FlatCap));
 
     QVector<int> *pointer;
+    // рисует cubes.
+    //
     for (int i=1; i<=xmlCubes.size(); ++i)
     {
         int count=0;
